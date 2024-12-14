@@ -5,7 +5,12 @@ export const tasksApiSlice = createApi({
     baseQuery: fetchBaseQuery({ baseUrl: 'http://localhost:3000/api' }),
     endpoints: (builder) => ({
         getTasks: builder.query({
-            query: () => '/tasks',
+            query: ({ priority, category }) => {
+                const params = new URLSearchParams();
+                if (priority) params.append('priority', priority);
+                if (category) params.append('category', category);
+                return `/tasks?${params.toString()}`;
+            },
             providesTags: [{ type: 'Task', id: 'LIST' }],
         }),
         addTask: builder.mutation({
@@ -24,10 +29,10 @@ export const tasksApiSlice = createApi({
             invalidatesTags: [{ type: 'Task', id: 'LIST' }]
         }),
         editTask: builder.mutation({
-            query: ({ id, title }) => ({
+            query: ({ id, title, priority, category }) => ({
                 url: `/tasks/${id}`,
                 method: 'PUT',
-                body: { title },
+                body: { title, priority, category },
             }),
             invalidatesTags: [{ type: 'Task', id: 'LIST' }],
         }),

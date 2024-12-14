@@ -1,7 +1,8 @@
 # Full-Stack To-Do List Application
 
-This repository contains a frontend To-Do List application built with the following technologies:
+This repository contains a full-stack To-Do List application built with the following technologies:
 
+- **Backend**: Node.js with Express.js
 - **Frontend**: React with Redux Toolkit, RTK Query, and Tailwind CSS
 
 ---
@@ -14,6 +15,11 @@ This repository contains a frontend To-Do List application built with the follow
 - Seamless integration between the frontend and backend using RTK Query.
 - Persistent in-memory task management for demonstration purposes.
 
+### Backend Features:
+- RESTful API endpoints for managing tasks.
+- In-memory database implementation for simplicity.
+- Modular routing structure for scalability.
+
 ### Frontend Features:
 - Dynamic and responsive UI built with Tailwind CSS.
 - State management with Redux Toolkit.
@@ -21,10 +27,9 @@ This repository contains a frontend To-Do List application built with the follow
 - User-friendly task input and editing with real-time updates.
 
 ---
-
 ## Backend API Endpoints
 
-### Base URL: `http://localhost:5000/api`
+### Base URL: `http://localhost:3000/api`
 
 | HTTP Method | Endpoint      | Description             |
 |-------------|---------------|-------------------------|
@@ -35,6 +40,7 @@ This repository contains a frontend To-Do List application built with the follow
 | DELETE      | `/tasks`      | Delete all tasks        |
 
 ---
+
 ## Future Enhancements
 
 ### Task Management Features:

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import {
   useAddTaskMutation,
   useDeleteAllTasksMutation,
@@ -7,24 +6,46 @@ import {
   useEditTaskMutation,
   useGetTasksQuery,
 } from "./redux/slices/tasksApiSlice";
+import { FaList } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { selectNewTask, setNewTask } from "./redux/slices/taskSlice";
+import {
+  selectNewTask,
+  setNewTask,
+  setPriority,
+  setCategory,
+} from "./redux/slices/taskSlice";
+import TaskInput from "./components/TaskInput";
+import TaskItem from "./components/TaskItem";
+import FilterTask from "./components/FilterTask";
+import TaskSkeleton from "./components/TaskSkeleton";
 
 const App = () => {
-  const { data: tasks = [], isLoading } = useGetTasksQuery();
+  const [filterPriority, setFilterPriority] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const newTask = useSelector(selectNewTask);
+  const priority = useSelector((state) => state.tasks.priority);
+  const category = useSelector((state) => state.tasks.category);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editedTaskTitle, setEditedTaskTitle] = useState("");
+  const [editedPriority, setEditedPriority] = useState("Medium");
+  const [editedCategory, setEditedCategory] = useState("General");
+
+  const { data: tasks = [], isLoading } = useGetTasksQuery({
+    priority: filterPriority,
+    category: filterCategory,
+  });
   const [addTask] = useAddTaskMutation();
   const [deleteTask] = useDeleteTaskMutation();
   const [editTask] = useEditTaskMutation();
   const [deleteAllTasks] = useDeleteAllTasksMutation();
   const dispatch = useDispatch();
-  const newTask = useSelector(selectNewTask);
-  const [editingTaskId, setEditingTaskId] = useState(null);
-  const [editedTaskTitle, setEditedTaskTitle] = useState("");
 
   const handleAddTask = async () => {
     if (!newTask.trim()) return;
-    await addTask({ title: newTask });
+    await addTask({ title: newTask, priority, category });
     dispatch(setNewTask(""));
+    dispatch(setPriority("Medium"));
+    dispatch(setCategory("General"));
   };
 
   const handleDeleteTask = async (id) => {
@@ -33,88 +54,105 @@ const App = () => {
 
   const handleEditTask = async () => {
     if (!editedTaskTitle.trim()) return;
-    await editTask({ id: editingTaskId, title: editedTaskTitle });
+    await editTask({
+      id: editingTaskId,
+      title: editedTaskTitle,
+      priority: editedPriority,
+      category: editedCategory,
+    });
     setEditingTaskId(null);
     setEditedTaskTitle("");
+    setEditedPriority("Medium");
+    setEditedCategory("General");
   };
 
   const handleDeleteAllTasks = async () => {
     await deleteAllTasks();
   };
 
-  if (isLoading) return <p>Loading tasks...</p>;
+  const handleStartEdit = (id, title, category, priority) => {
+    setEditingTaskId(id);
+    setEditedTaskTitle(title);
+    setEditedCategory(category);
+    setEditedPriority(priority);
+  };
+
+  if (isLoading) return <TaskSkeleton />;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4 text-center">To-Do List</h1>
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            value={newTask}
-            onChange={(e) => dispatch(setNewTask(e.target.value))}
-            placeholder="Enter a new task"
-            className="flex-1 border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300"
-          />
-          <button
-            onClick={handleAddTask}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-          >
-            Add
-          </button>
+    <div className="min-h-screen bg-gradient-to-r from-indigo-100 to-indigo-50 flex items-center justify-center py-10">
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-4xl">
+        {/* Header */}
+        <h1 className="text-4xl font-extrabold mb-6 text-center text-indigo-700">
+          <div className="flex items-center justify-center gap-2">
+            <FaList className="text-indigo-600 text-4xl" />
+            <h1 className="text-4xl font-extrabold text-indigo-700">
+              To-Do List
+            </h1>
+          </div>
+        </h1>
+
+        {/* Input and Filter */}
+        <TaskInput
+          newTask={newTask}
+          priority={priority}
+          category={category}
+          onAdd={handleAddTask}
+        />
+        <FilterTask
+          setFilterCategory={setFilterCategory}
+          setFilterPriority={setFilterPriority}
+          filterPriority={filterPriority}
+          filterCategory={filterCategory}
+        />
+
+        {/* Task List */}
+        <div className="mt-8">
+          {tasks.length > 0 ? (
+            <ul className="space-y-4">
+              {tasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  task={{
+                    ...task,
+                    isEditing: task.id === editingTaskId,
+                    title:
+                      task.id === editingTaskId ? editedTaskTitle : task.title,
+                  }}
+                  onStartEdit={handleStartEdit}
+                  onEdit={handleEditTask}
+                  onDelete={handleDeleteTask}
+                  editedTaskTitle={editedTaskTitle}
+                  setEditedTaskTitle={setEditedTaskTitle}
+                  editedPriority={editedPriority}
+                  setEditedPriority={setEditedPriority}
+                  editedCategory={editedCategory}
+                  setEditedCategory={setEditedCategory}
+                />
+              ))}
+            </ul>
+          ) : (
+            <div className="text-gray-500 text-center mt-12 flex flex-col items-center">
+              <img
+                src="https://via.placeholder.com/200"
+                alt="Empty"
+                className="w-40 h-40 mb-4 opacity-80"
+              />
+              <p className="text-lg font-medium">No tasks available.</p>
+              <p className="text-sm text-gray-400">
+                Add a new task or adjust your filters.
+              </p>
+            </div>
+          )}
         </div>
-        <ul className="space-y-2">
-          {tasks.map((task) => (
-            <li
-              key={task.id}
-              className="flex justify-between items-center border-b pb-2"
-            >
-              {editingTaskId === task.id ? (
-                <>
-                  <input
-                    type="text"
-                    value={editedTaskTitle}
-                    onChange={(e) => setEditedTaskTitle(e.target.value)}
-                    className="flex-1 border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300"
-                  />
-                  <button
-                    onClick={handleEditTask}
-                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition ml-2"
-                  >
-                    Save
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span>{task.title}</span>
-                  <div>
-                    <button
-                      onClick={() => {
-                        setEditingTaskId(task.id);
-                        setEditedTaskTitle(task.title);
-                      }}
-                      className="text-blue-500 hover:text-blue-700 transition mr-2"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTask(task.id)}
-                      className="text-red-500 hover:text-red-700 transition"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
+
+        {/* Delete All Tasks */}
         {tasks.length > 0 && (
           <button
             onClick={handleDeleteAllTasks}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition mt-4 w-full"
+            className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all mt-8 w-full font-semibold shadow-md hover:shadow-lg"
           >
-            Delete All
+            🗑 Delete All Tasks
           </button>
         )}
       </div>
